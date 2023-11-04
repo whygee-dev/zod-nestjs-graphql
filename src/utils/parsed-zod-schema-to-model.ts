@@ -42,8 +42,6 @@ const defineProperty = (
         customType?: ModelMapValue
     }
 ) => {
-    model.prototype[name] = customType ?? true
-
     if (customType) {
         Field(() => customType, { nullable, name })(model.prototype, name)
 
