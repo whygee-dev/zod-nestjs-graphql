@@ -1,8 +1,8 @@
 {
-    "name": "zod-typegraphql",
+    "name": "zod-type-graphql",
     "version": "0.1.0",
     "main": "index.js",
-    "repository": "https://github.com/whygee-dev/zod-typegraphql.git",
+    "repository": "https://github.com/whygee-dev/zod-type-graphql.git",
     "author": "Yahya Jirari",
     "license": "MIT",
     "scripts": {
