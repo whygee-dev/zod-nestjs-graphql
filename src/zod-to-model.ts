@@ -48,19 +48,3 @@ export function zodToModel<T extends AllowedZodSchemaInput>(
         'ObjectType'
     )
 }
-
-zodToModel(
-    z.object({
-        a: z.string(),
-        b: z.number(),
-        nested: z.object({
-            c: z.boolean(),
-            // d: z.date(),
-        }),
-        // array: z.array(z.string()),
-    }),
-    {
-        name: 'Test',
-        map: {},
-    }
-)

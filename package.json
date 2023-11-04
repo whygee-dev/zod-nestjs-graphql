@@ -1,6 +1,6 @@
 {
     "name": "zod-type-graphql",
-    "version": "0.1.0",
+    "version": "0.0.0",
     "main": "index.js",
     "repository": "https://github.com/whygee-dev/zod-type-graphql.git",
     "author": "Yahya Jirari",
