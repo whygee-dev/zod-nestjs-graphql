@@ -12,7 +12,6 @@ import {
     registerEnumType,
 } from 'type-graphql'
 import { GraphQLObjectType, GraphQLSchema } from 'graphql'
-import { printSchemaWithDirectives } from '@graphql-tools/utils'
 
 const getFields = (schema: GraphQLSchema, name: string) =>
     (schema.getType(name) as GraphQLObjectType)?.getFields()
@@ -464,8 +463,6 @@ describe('parsedZodSchemaToModel', () => {
         const schema = await buildSchema({
             resolvers: [TestResolver],
         })
-
-        console.log(printSchemaWithDirectives(schema))
 
         const testFields = getFields(schema, 'Test')
 
