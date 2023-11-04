@@ -7,7 +7,7 @@
     "license": "MIT",
     "scripts": {
         "test": "vitest",
-        "build": "tsc",
+        "build": "tsc -p tsconfig.build.json",
         "build-watch": "tsc --watch",
         "release": "release-it"
     },

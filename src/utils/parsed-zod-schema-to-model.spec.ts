@@ -2,7 +2,15 @@ import { describe, test, expect } from 'vitest'
 import { z } from 'zod'
 import { parseZodSchema } from './parse-zod-schema'
 import { parsedZodSchemaToModel } from './parsed-zod-schema-to-model'
-import { Query, Resolver, buildSchema } from 'type-graphql'
+import {
+    Field,
+    Int,
+    ObjectType,
+    Query,
+    Resolver,
+    buildSchema,
+    registerEnumType,
+} from 'type-graphql'
 import { GraphQLObjectType, GraphQLSchema } from 'graphql'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 
@@ -270,5 +278,274 @@ describe('parsedZodSchemaToModel', () => {
         )
 
         expect(query.type.toString()).toEqual('Test!')
+    })
+
+    test('should return the model of objects and enum taking into account model mapping', async () => {
+        // Arrange
+        enum TestEnum {
+            A = 'A',
+            B = 'B',
+        }
+
+        const parsedZodSchema = parseZodSchema(
+            z.object({
+                object: z.object({
+                    stringField: z.string(),
+                }),
+                object2: z.object({
+                    stringField: z.string(),
+                }),
+                enumField: z.nativeEnum(TestEnum),
+            })
+        )
+
+        @ObjectType()
+        class TestObject {
+            @Field(() => String)
+            modifiedStringField!: string
+        }
+
+        registerEnumType(TestEnum, {
+            name: 'ModifiedTestEnum',
+        })
+
+        // Act
+        const model = parsedZodSchemaToModel(
+            parsedZodSchema,
+            {
+                name: 'Test',
+                map: {
+                    object: TestObject,
+                    enumField: TestEnum,
+                },
+            },
+            'ObjectType'
+        )
+
+        // Assert
+        @Resolver()
+        class TestResolver {
+            @Query(() => model)
+            test() {
+                return model
+            }
+        }
+
+        const schema = await buildSchema({
+            resolvers: [TestResolver],
+        })
+
+        const testFields = getFields(schema, 'Test')
+        const testObjectFields = getFields(schema, 'TestObject')
+        const testObject2Fields = getFields(schema, 'Test_Object2')
+
+        expect(testFields.object.type.toString()).toEqual('TestObject!')
+        expect(testFields.object2.type.toString()).toEqual('Test_Object2!')
+        expect(testFields.enumField.type.toString()).toEqual(
+            'ModifiedTestEnum!'
+        )
+
+        expect(testObjectFields.modifiedStringField.type.toString()).toEqual(
+            'String!'
+        )
+        expect(testObject2Fields.stringField.type.toString()).toEqual('String!')
+    })
+
+    test('should return the model of nested objects and arrays taking into account model mapping', async () => {
+        // Arrange
+        enum TestEnum {
+            A = 'A',
+            B = 'B',
+        }
+
+        const parsedZodSchema = parseZodSchema(
+            z.object({
+                object: z.object({
+                    stringField: z.string(),
+                    nestedObject: z.object({
+                        booleanField: z.boolean(),
+                    }),
+                    nestedObjectUnmapped: z.object({
+                        booleanField: z.boolean(),
+                    }),
+                    nestedArrayField: z.array(
+                        z.object({
+                            stringField: z.string(),
+                        })
+                    ),
+                    nestedArrayFieldUnmapped: z.array(
+                        z.object({
+                            stringField: z.string(),
+                        })
+                    ),
+                    enumField: z.nativeEnum(TestEnum),
+                }),
+                object2: z.object({
+                    stringField: z.string(),
+                    nestedObject: z.object({
+                        evenMoreNestedObjectField: z.object({
+                            intField: z.number().int(),
+                        }),
+                        evenMoreNestedObjectFieldUnmapped: z.object({
+                            intField: z.number().int(),
+                        }),
+                        evenMoreNestedArrayField: z.array(
+                            z.object({
+                                stringField: z.string(),
+                            })
+                        ),
+                        evenMoreNestedArrayFieldUnmapped: z.array(
+                            z.object({
+                                stringField: z.string(),
+                            })
+                        ),
+                    }),
+                }),
+            })
+        )
+
+        @ObjectType()
+        class NestedTestObject {
+            @Field(() => Boolean)
+            modifiedBooleanField!: string
+        }
+
+        @ObjectType()
+        class NestedTestArrayElement {
+            @Field(() => String)
+            modifiedStringField!: string
+        }
+
+        @ObjectType()
+        class EvenMoreNestedTestObjectField {
+            @Field(() => Int)
+            modifiedIntField!: number
+        }
+
+        @ObjectType()
+        class EvenMoreNestedTestArrayElement {
+            @Field(() => String)
+            modifiedStringField!: string
+        }
+
+        registerEnumType(TestEnum, {
+            name: 'ModifiedTestEnum',
+        })
+
+        // Act
+        const model = parsedZodSchemaToModel(
+            parsedZodSchema,
+            {
+                name: 'Test',
+                map: {
+                    'object.nestedObject': NestedTestObject,
+                    'object.enumField': TestEnum,
+                    'object.nestedArrayField': [NestedTestArrayElement],
+
+                    'object2.nestedObject.evenMoreNestedObjectField':
+                        EvenMoreNestedTestObjectField,
+                    'object2.nestedObject.evenMoreNestedArrayField': [
+                        EvenMoreNestedTestArrayElement,
+                    ],
+                },
+            },
+            'ObjectType'
+        )
+
+        // Assert
+        @Resolver()
+        class TestResolver {
+            @Query(() => model)
+            test() {
+                return model
+            }
+        }
+
+        const schema = await buildSchema({
+            resolvers: [TestResolver],
+        })
+
+        console.log(printSchemaWithDirectives(schema))
+
+        const testFields = getFields(schema, 'Test')
+
+        expect(testFields.object.type.toString()).toEqual('Test_Object!')
+        expect(testFields.object2.type.toString()).toEqual('Test_Object2!')
+
+        const testObjectFields = getFields(schema, 'Test_Object')
+
+        expect(testObjectFields.stringField.type.toString()).toEqual('String!')
+        expect(testObjectFields.nestedObject.type.toString()).toEqual(
+            'NestedTestObject!'
+        )
+        expect(testObjectFields.nestedObjectUnmapped.type.toString()).toEqual(
+            'Test_Object_NestedObjectUnmapped!'
+        )
+        expect(testObjectFields.enumField.type.toString()).toEqual(
+            'ModifiedTestEnum!'
+        )
+        expect(testObjectFields.nestedArrayField.type.toString()).toEqual(
+            '[NestedTestArrayElement!]!'
+        )
+        expect(
+            testObjectFields.nestedArrayFieldUnmapped.type.toString()
+        ).toEqual('[Test_Object_NestedArrayFieldUnmapped!]!')
+
+        const testNestedObjectFields = getFields(schema, 'NestedTestObject')
+
+        expect(
+            testNestedObjectFields.modifiedBooleanField.type.toString()
+        ).toEqual('Boolean!')
+
+        const testNestedObjectUnmappedFields = getFields(
+            schema,
+            'Test_Object_NestedObjectUnmapped'
+        )
+
+        expect(
+            testNestedObjectUnmappedFields.booleanField.type.toString()
+        ).toEqual('Boolean!')
+
+        const testEvenMoreNestedObjectFields = getFields(
+            schema,
+            'EvenMoreNestedTestObjectField'
+        )
+        expect(
+            testEvenMoreNestedObjectFields.modifiedIntField.type.toString()
+        ).toEqual('Int!')
+        expect(
+            testEvenMoreNestedObjectFields.modifiedIntField.type.toString()
+        ).toEqual('Int!')
+
+        const testObject2NestedObjectFields = getFields(
+            schema,
+            'Test_Object2_NestedObject'
+        )
+
+        expect(
+            testObject2NestedObjectFields.evenMoreNestedObjectField.type.toString()
+        ).toEqual('EvenMoreNestedTestObjectField!')
+        expect(
+            testObject2NestedObjectFields.evenMoreNestedObjectFieldUnmapped.type.toString()
+        ).toEqual(
+            'Test_Object2_NestedObject_EvenMoreNestedObjectFieldUnmapped!'
+        )
+        expect(
+            testObject2NestedObjectFields.evenMoreNestedArrayField.type.toString()
+        ).toEqual('[EvenMoreNestedTestArrayElement!]!')
+        expect(
+            testObject2NestedObjectFields.evenMoreNestedArrayFieldUnmapped.type.toString()
+        ).toEqual(
+            '[Test_Object2_NestedObject_EvenMoreNestedArrayFieldUnmapped!]!'
+        )
+
+        const testEvenMoreNestedArrayElementFields = getFields(
+            schema,
+            'EvenMoreNestedTestArrayElement'
+        )
+
+        expect(
+            testEvenMoreNestedArrayElementFields.modifiedStringField.type.toString()
+        ).toEqual('String!')
     })
 })

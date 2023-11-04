@@ -1,22 +1,22 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "target": "es2021",
-    "module": "commonjs",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "rootDir": "./src",
-    "moduleResolution": "node",
-    "baseUrl": ".",
-    "declaration": true,
-    "sourceMap": true,
-    "outDir": "./build",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipDefaultLibCheck": true,
-    "skipLibCheck": true
-  },
-  "exclude": ["node_modules", "dist"]
+    "compilerOptions": {
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2021",
+        "module": "commonjs",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "rootDir": "./src",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "./build",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipDefaultLibCheck": true,
+        "skipLibCheck": true
+    },
+    "exclude": ["node_modules", "build", "examples"]
 }

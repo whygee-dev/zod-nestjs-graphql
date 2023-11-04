@@ -96,6 +96,7 @@ const definePropertiesRecursively = (
     parsedZodSchema: ParsedZodSchema,
     map: ModelMap<AllowedZodSchemaInput>,
     name: string,
+    currentKey = '',
     type: 'ObjectType' | 'InputType'
 ) => {
     if (parsedZodSchema.type === AllowedZodTypes.ZodObject) {
@@ -104,7 +105,9 @@ const definePropertiesRecursively = (
         for (const [key, val] of Object.entries(
             parsedZodSchema.properties ?? {}
         )) {
-            const mapped = get(map, key)
+            const pathKey = currentKey !== '' ? `${currentKey}.${key}` : key
+            const mapped = get(map, pathKey)
+
             const newName = `${name}_${ensurePascalCase(key)}`
 
             if ('properties' in val) {
@@ -117,6 +120,7 @@ const definePropertiesRecursively = (
                             val,
                             map,
                             newName,
+                            pathKey,
                             type
                         ),
                 })
@@ -133,6 +137,7 @@ const definePropertiesRecursively = (
                             val.element,
                             map,
                             newName,
+                            pathKey,
                             type
                         ),
                     ],
@@ -143,7 +148,7 @@ const definePropertiesRecursively = (
 
             defineProperty(model, key, {
                 ...val,
-                customType: get(map, key),
+                customType: mapped,
             })
         }
     }
@@ -157,6 +162,7 @@ const definePropertiesRecursively = (
             parsedZodSchema.element,
             map,
             name,
+            currentKey,
             type
         )
     }
@@ -182,6 +188,7 @@ export const parsedZodSchemaToModel = <T extends AllowedZodSchemaInput>(
         parsedZodSchema,
         options.map ?? {},
         options.name,
+        '',
         type
     )
 
