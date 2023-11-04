@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { AllowedZodSchemaInput, Model, ZodToModelOptions } from './types'
 import { parseZodSchema } from './utils/parse-zod-schema'
 import { parsedZodSchemaToModel } from './utils/parsed-zod-schema-to-model'
