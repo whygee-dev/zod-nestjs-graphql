@@ -6,7 +6,7 @@
     "author": "Yahya Jirari",
     "license": "MIT",
     "scripts": {
-        "test": "jest",
+        "test": "vitest",
         "build": "tsc",
         "build-watch": "tsc --watch",
         "release": "release-it"
