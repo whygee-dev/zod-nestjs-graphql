@@ -1,0 +1,136 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type CustomProfile {
+  address: String!
+  age: Int!
+  country: UserCountry!
+  email: String!
+  name: String!
+  phone: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  user: User!
+  users: [Users!]!
+}
+
+type User {
+  createdAt: DateTime!
+  customProfile: CustomProfile!
+  customRoles: UserRole
+  hobbies: [String!]!
+  id: String!
+  profile: User_Profile!
+  roles: User_Roles
+  updatedAt: DateTime
+}
+
+enum UserCountry {
+  FR
+  UK
+  US
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+type User_Profile {
+  address: String!
+  age: Int!
+  birthDate: DateTime
+  country: User_Profile_Country
+  customBirthDate: DateTime
+  customCountry: UserCountry
+  email: String!
+  name: String!
+  phone: String
+}
+
+enum User_Profile_Country {
+  FR
+  UK
+  US
+}
+
+enum User_Roles {
+  ADMIN
+  USER
+}
+
+type Users {
+  createdAt: DateTime!
+  customProfile: Users_CustomProfile!
+  customRoles: Users_CustomRoles
+  hobbies: [String!]!
+  id: String!
+  profile: Users_Profile!
+  roles: Users_Roles
+  updatedAt: DateTime
+}
+
+type Users_CustomProfile {
+  address: String!
+  age: Int!
+  birthDate: DateTime
+  country: Users_CustomProfile_Country
+  customBirthDate: DateTime
+  customCountry: Users_CustomProfile_CustomCountry
+  email: String!
+  name: String!
+  phone: String
+}
+
+enum Users_CustomProfile_Country {
+  FR
+  UK
+  US
+}
+
+enum Users_CustomProfile_CustomCountry {
+  FR
+  UK
+  US
+}
+
+enum Users_CustomRoles {
+  ADMIN
+  USER
+}
+
+type Users_Profile {
+  address: String!
+  age: Int!
+  birthDate: DateTime
+  country: Users_Profile_Country
+  customBirthDate: DateTime
+  customCountry: Users_Profile_CustomCountry
+  email: String!
+  name: String!
+  phone: String
+}
+
+enum Users_Profile_Country {
+  FR
+  UK
+  US
+}
+
+enum Users_Profile_CustomCountry {
+  FR
+  UK
+  US
+}
+
+enum Users_Roles {
+  ADMIN
+  USER
+}

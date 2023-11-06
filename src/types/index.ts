@@ -1,5 +1,6 @@
 import { z, AnyZodObject, TypeOf, EnumLike } from 'zod'
 import { Class, NestedObjectPaths } from './utility'
+import { GraphQLScalarType } from 'graphql'
 
 export enum AllowedZodTypes {
     ZodObject = 'ZodObject',
@@ -45,7 +46,12 @@ export type ParsedZodSchema =
           nullable: boolean
       }
 
-export type ModelMapValue = Class | Class[] | EnumLike
+export type ModelMapValue =
+    | Class
+    | [Class]
+    | EnumLike
+    | GraphQLScalarType
+    | [GraphQLScalarType]
 
 export type ModelMap<T extends AllowedZodSchemaInput> = Partial<
     Record<NestedObjectPaths<TypeOf<T>>, ModelMapValue>
@@ -53,6 +59,7 @@ export type ModelMap<T extends AllowedZodSchemaInput> = Partial<
 
 export type ZodToModelOptions<T extends AllowedZodSchemaInput> = {
     name: string
+    separator?: string
     map?: ModelMap<T>
 }
 

@@ -1,8 +1,9 @@
 {
-    "name": "zod-type-graphql",
+    "name": "zod-nestjs-graphql",
     "version": "0.0.0",
-    "main": "index.js",
-    "repository": "https://github.com/whygee-dev/zod-type-graphql.git",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "repository": "https://github.com/whygee-dev/zod-nestjs-graphql",
     "author": "Yahya Jirari",
     "license": "MIT",
     "scripts": {
@@ -11,20 +12,24 @@
         "build-watch": "tsc --watch",
         "release": "release-it"
     },
-    "dependencies": {
-        "@graphql-tools/utils": "^10.0.8",
-        "graphql": "^15.3.0",
-        "graphql-scalars": "^1.22.4",
-        "lodash": "^4.17.21",
-        "reflect-metadata": "^0.1.13",
-        "type-graphql": "^1.1.1",
-        "zod": "^3.22.4"
+    "peerDependencies": {
+        "@nestjs/common": ">= 8.0",
+        "@nestjs/core": ">= 8.0",
+        "@nestjs/graphql": ">= 10.0",
+        "graphql": ">= 16.3.0",
+        "graphql-scalars": ">= 1.22.4",
+        "lodash": ">= 4.17.21",
+        "reflect-metadata": ">= 0.1.13",
+        "rxjs": ">= 7.5.5",
+        "zod": ">= 3.22"
     },
     "devDependencies": {
+        "@nestjs/platform-express": "^10.2.8",
         "@types/lodash": "^4.14.200",
+        "cuid": "^3.0.0",
+        "release-it": "^16.1.0",
         "typescript": "^5.2.2",
-        "vitest": "^0.34.6",
-        "release-it": "^16.1.0"
+        "vitest": "^0.34.6"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org"

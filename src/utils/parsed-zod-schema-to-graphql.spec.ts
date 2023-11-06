@@ -1,22 +1,46 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { z } from 'zod'
 import { parseZodSchema } from './parse-zod-schema'
-import { parsedZodSchemaToModel } from './parsed-zod-schema-to-model'
+import { parsedZodSchemaToModel } from './parsed-zod-schema-to-graphql'
 import {
     Field,
+    GraphQLSchemaBuilderModule,
+    GraphQLSchemaFactory,
     Int,
     ObjectType,
     Query,
     Resolver,
-    buildSchema,
     registerEnumType,
-} from 'type-graphql'
+} from '@nestjs/graphql'
 import { GraphQLObjectType, GraphQLSchema } from 'graphql'
+import { NestFactory } from '@nestjs/core'
+import { INestApplication } from '@nestjs/common'
+import cuid from 'cuid'
+import { ensurePascalCase } from './ensure-pascal-case'
+
+const getSchemaFactory = async () => {
+    const app = await NestFactory.create(GraphQLSchemaBuilderModule)
+    await app.init()
+
+    return { app, factory: app.get(GraphQLSchemaFactory) }
+}
 
 const getFields = (schema: GraphQLSchema, name: string) =>
     (schema.getType(name) as GraphQLObjectType)?.getFields()
 
 describe('parsedZodSchemaToModel', () => {
+    let app: INestApplication, factory: GraphQLSchemaFactory
+
+    beforeEach(async () => {
+        const schemaFactory = await getSchemaFactory()
+        app = schemaFactory.app
+        factory = schemaFactory.factory
+    })
+
+    afterEach(async () => {
+        await app.close()
+    })
+
     test('should return the model of an object with diverse properties', async () => {
         // Arrange
         enum TestEnum {
@@ -48,6 +72,9 @@ describe('parsedZodSchemaToModel', () => {
 
                 enumField: zodEnum,
                 optionalEnumField: zodEnum.optional(),
+
+                stringArrayField: z.array(z.string()),
+                optionalStringArrayField: z.array(z.string()).optional(),
             })
         )
 
@@ -69,9 +96,7 @@ describe('parsedZodSchemaToModel', () => {
             }
         }
 
-        const schema = await buildSchema({
-            resolvers: [TestResolver],
-        })
+        const schema = await factory.create([TestResolver])
 
         const fields = getFields(schema, 'Test')
 
@@ -90,16 +115,26 @@ describe('parsedZodSchemaToModel', () => {
         expect(fields.dateField.type.toString()).toEqual('DateTime!')
         expect(fields.optionalDateField.type.toString()).toEqual('DateTime')
 
-        expect(fields.nativeEnumField.type.toString()).toEqual(
-            'NativeEnumField!'
-        )
-        expect(fields.nativeEnumOptionalField.type.toString()).toEqual(
-            'NativeEnumOptionalField'
+        expect(fields.stringArrayField.type.toString()).toEqual('[String!]!')
+        expect(fields.optionalStringArrayField.type.toString()).toEqual(
+            '[String!]'
         )
 
-        expect(fields.enumField.type.toString()).toEqual('EnumField!')
+        expect(fields.nativeEnumField.type.toString()).toEqual(
+            'Test_NativeEnumField!'
+        )
+        expect(fields.nativeEnumOptionalField.type.toString()).toEqual(
+            'Test_NativeEnumOptionalField'
+        )
+
+        expect(fields.enumField.type.toString()).toEqual('Test_EnumField!')
         expect(fields.optionalEnumField.type.toString()).toEqual(
-            'OptionalEnumField'
+            'Test_OptionalEnumField'
+        )
+
+        expect(fields.stringArrayField.type.toString()).toEqual('[String!]!')
+        expect(fields.optionalStringArrayField.type.toString()).toEqual(
+            '[String!]'
         )
     })
 
@@ -140,9 +175,7 @@ describe('parsedZodSchemaToModel', () => {
             }
         }
 
-        const schema = await buildSchema({
-            resolvers: [TestResolver],
-        })
+        const schema = await factory.create([TestResolver])
 
         const testFields = getFields(schema, 'Test')
         const testNestedFields = getFields(schema, 'Test_Nested')
@@ -201,9 +234,7 @@ describe('parsedZodSchemaToModel', () => {
             }
         }
 
-        const schema = await buildSchema({
-            resolvers: [TestResolver],
-        })
+        const schema = await factory.create([TestResolver])
 
         const fields = getFields(schema, 'Test')
 
@@ -227,7 +258,7 @@ describe('parsedZodSchemaToModel', () => {
                         ),
                     })
                 ),
-                object: z.object({
+                simpleObject: z.object({
                     stringField: z.string(),
                 }),
             })
@@ -251,21 +282,23 @@ describe('parsedZodSchemaToModel', () => {
             }
         }
 
-        const schema = await buildSchema({
-            resolvers: [TestResolver],
-        })
+        const schema = await factory.create([TestResolver])
 
         const testFields = getFields(schema, 'Test')
-        const testObjectFields = getFields(schema, 'Test_Object')
+        const testSimpleObjectFields = getFields(schema, 'Test_SimpleObject')
         const testArrayFields = getFields(schema, 'Test_Array')
         const testArrayNestedFields = getFields(schema, 'Test_Array_Nested')
 
         const query = getFields(schema, 'Query').test
 
         expect(testFields.array.type.toString()).toEqual('[Test_Array!]!')
-        expect(testFields.object.type.toString()).toEqual('Test_Object!')
+        expect(testFields.simpleObject.type.toString()).toEqual(
+            'Test_SimpleObject!'
+        )
 
-        expect(testObjectFields.stringField.type.toString()).toEqual('String!')
+        expect(testSimpleObjectFields.stringField.type.toString()).toEqual(
+            'String!'
+        )
 
         expect(testArrayFields.stringField.type.toString()).toEqual('String!')
         expect(testArrayFields.nested.type.toString()).toEqual(
@@ -279,6 +312,56 @@ describe('parsedZodSchemaToModel', () => {
         expect(query.type.toString()).toEqual('Test!')
     })
 
+    test('should return the model taking into account a custom separator', async () => {
+        // Arrange
+
+        const id = cuid()
+        const simpleObjectId = `simpleObject${id}`
+
+        const parsedZodSchema = parseZodSchema(
+            z.object({
+                [simpleObjectId]: z.object({
+                    stringField: z.string(),
+                }),
+            })
+        )
+
+        // Act
+        const model = parsedZodSchemaToModel(
+            parsedZodSchema,
+            {
+                name: 'Test',
+                separator: '7',
+            },
+            'ObjectType'
+        )
+
+        // Assert
+        @Resolver()
+        class TestResolver {
+            @Query(() => model)
+            test() {
+                return model
+            }
+        }
+
+        const schema = await factory.create([TestResolver])
+
+        const testFields = getFields(schema, 'Test')
+        const testSimpleObjectFields = getFields(
+            schema,
+            `Test7${ensurePascalCase(simpleObjectId)}`
+        )
+
+        expect(testFields[simpleObjectId].type.toString()).toEqual(
+            `Test7${ensurePascalCase(simpleObjectId)}!`
+        )
+
+        expect(testSimpleObjectFields.stringField.type.toString()).toEqual(
+            'String!'
+        )
+    })
+
     test('should return the model of objects and enum taking into account model mapping', async () => {
         // Arrange
         enum TestEnum {
@@ -286,12 +369,16 @@ describe('parsedZodSchemaToModel', () => {
             B = 'B',
         }
 
+        const id = cuid()
+        const simpleObjectId = `simpleObject${id}`
+        const simpleObject2Id = `simpleObject2${id}`
+
         const parsedZodSchema = parseZodSchema(
             z.object({
-                object: z.object({
+                [simpleObjectId]: z.object({
                     stringField: z.string(),
                 }),
-                object2: z.object({
+                [simpleObject2Id]: z.object({
                     stringField: z.string(),
                 }),
                 enumField: z.nativeEnum(TestEnum),
@@ -314,7 +401,7 @@ describe('parsedZodSchemaToModel', () => {
             {
                 name: 'Test',
                 map: {
-                    object: TestObject,
+                    [simpleObjectId]: TestObject,
                     enumField: TestEnum,
                 },
             },
@@ -330,24 +417,31 @@ describe('parsedZodSchemaToModel', () => {
             }
         }
 
-        const schema = await buildSchema({
-            resolvers: [TestResolver],
-        })
+        const schema = await factory.create([TestResolver])
 
         const testFields = getFields(schema, 'Test')
-        const testObjectFields = getFields(schema, 'TestObject')
-        const testObject2Fields = getFields(schema, 'Test_Object2')
+        const testSimpleObjectFields = getFields(schema, 'TestObject')
+        const testSimpleObject2Fields = getFields(
+            schema,
+            `Test_${ensurePascalCase(simpleObject2Id)}`
+        )
 
-        expect(testFields.object.type.toString()).toEqual('TestObject!')
-        expect(testFields.object2.type.toString()).toEqual('Test_Object2!')
+        expect(testFields[simpleObjectId].type.toString()).toEqual(
+            'TestObject!'
+        )
+        expect(testFields[simpleObject2Id].type.toString()).toEqual(
+            `Test_${ensurePascalCase(simpleObject2Id)}!`
+        )
         expect(testFields.enumField.type.toString()).toEqual(
             'ModifiedTestEnum!'
         )
 
-        expect(testObjectFields.modifiedStringField.type.toString()).toEqual(
+        expect(
+            testSimpleObjectFields.modifiedStringField.type.toString()
+        ).toEqual('String!')
+        expect(testSimpleObject2Fields.stringField.type.toString()).toEqual(
             'String!'
         )
-        expect(testObject2Fields.stringField.type.toString()).toEqual('String!')
     })
 
     test('should return the model of nested objects and arrays taking into account model mapping', async () => {
@@ -460,9 +554,7 @@ describe('parsedZodSchemaToModel', () => {
             }
         }
 
-        const schema = await buildSchema({
-            resolvers: [TestResolver],
-        })
+        const schema = await factory.create([TestResolver])
 
         const testFields = getFields(schema, 'Test')
 

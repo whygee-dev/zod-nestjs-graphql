@@ -1,56 +1,84 @@
 export type Class<T = any> = new (...args: any[]) => T
 
-type Cleanup<T> = 0 extends 1 & T
-    ? unknown
-    : T extends readonly any[]
-    ? Exclude<keyof T, keyof any[]> extends never
-        ? { [k: `${number}`]: T[number] }
-        : Omit<T, keyof any[]>
-    : T
+export type Prev = [
+    never,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    ...0[]
+]
 
-type Writable<T, O> = T extends O
-    ? T
-    : {
-          [P in keyof T as IfEquals<
-              { [Q in P]: T[P] },
-              { -readonly [Q in P]: T[P] },
-              P
-          >]: T[P]
-      }
+type Key = string | number | symbol
 
-type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <
-    T
->() => T extends Y ? 1 : 2
-    ? A
-    : B
+type Join<L extends Key | undefined, R extends Key | undefined> = L extends
+    | string
+    | number
+    ? R extends string | number
+        ? `${L}.${R}`
+        : L
+    : R extends string | number
+    ? R
+    : undefined
 
-type PrefixKeys<V, K extends PropertyKey, O> = V extends O
-    ? { [P in K]: V }
-    : V extends object
-    ? {
-          [P in keyof V as `${Extract<K, string | number>}.${Extract<
-              P,
-              string | number
-          >}`]: V[P]
-      }
-    : { [P in K]: V }
+type Union<
+    L extends unknown | undefined,
+    R extends unknown | undefined
+> = L extends undefined
+    ? R extends undefined
+        ? undefined
+        : R
+    : R extends undefined
+    ? L
+    : L | R
 
-type ValueOf<T> = T[keyof T]
+// Use this type to define object types you want to skip (no path-scanning)
+type ObjectsToIgnore = { new (...parms: any[]): any } | Date | Array<any>
 
-type Flatten<T, O = never> = Writable<Cleanup<T>, O> extends infer U
-    ? U extends O
-        ? U
-        : U extends object
-        ?
-              | ValueOf<{
-                    [K in keyof U]-?: (
-                        x: PrefixKeys<Flatten<U[K], O>, K, O>
-                    ) => void
-                }>
-              | ((x: U) => void) extends (x: infer I) => void
-            ? { [K in keyof I]: I[K] }
-            : never
-        : U
-    : never
+type ValidObject<T> = T extends object
+    ? T extends ObjectsToIgnore
+        ? false & 1
+        : T
+    : false & 1
 
-export type NestedObjectPaths<T> = keyof Flatten<T>
+export type DotPath<
+    T extends object,
+    Prev extends Key | undefined = undefined,
+    Path extends Key | undefined = undefined,
+    PrevTypes extends object = T
+> = string &
+    {
+        [K in keyof T]: T[K] extends PrevTypes | T // T[K] is a type alredy checked?
+            ? //  Return all previous paths.
+              Union<Union<Prev, Path>, Join<Path, K>>
+            : // T[K] is an object?.
+            Required<T>[K] extends ValidObject<Required<T>[K]>
+            ? // Continue extracting
+              DotPath<
+                  Required<T>[K],
+                  Union<Prev, Path>,
+                  Join<Path, K>,
+                  PrevTypes | T
+              >
+            : // Return all previous paths, including current key.
+              Union<Union<Prev, Path>, Join<Path, K>>
+    }[keyof T]
+
+export type NestedObjectPaths<T extends object> = DotPath<T>

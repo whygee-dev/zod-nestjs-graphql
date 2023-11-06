@@ -2,6 +2,7 @@
 // https://github.com/incetarik/nestjs-graphql-zod/blob/master/src/helpers/unwrap.ts
 // Author: incetarik
 
+import { Prev } from '../types/utility'
 import {
     ZodCatch,
     ZodDefault,
@@ -13,32 +14,6 @@ import {
     ZodTransformer,
     ZodType,
 } from 'zod'
-
-export type Prev = [
-    never,
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    ...0[]
-]
 
 /**
  * Unwraps any given zod type by one level.
