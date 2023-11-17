@@ -637,4 +637,53 @@ describe('parsedZodSchemaToModel', () => {
             testEvenMoreNestedArrayElementFields.modifiedStringField.type.toString()
         ).toEqual('String!')
     })
+
+    test('should throw an error if type is not supported and no custom type is provided', async () => {
+        // Arrange
+        const parsedZodSchema = parseZodSchema(
+            z.object({
+                union: z.union([z.string(), z.number()]),
+            })
+        )
+
+        // Act
+        const model = () =>
+            parsedZodSchemaToModel(
+                parsedZodSchema,
+                {
+                    name: 'Test',
+                },
+                'ObjectType'
+            )
+
+        // Assert
+        expect(model).toThrowError(
+            "Type of 'union' not supported, consider providing a custom type via the map option"
+        )
+    })
+
+    test('should not throw an error if type is not supported but a custom type is provided', async () => {
+        // Arrange
+        const parsedZodSchema = parseZodSchema(
+            z.object({
+                union: z.union([z.string(), z.number()]),
+            })
+        )
+
+        // Act
+        const model = () =>
+            parsedZodSchemaToModel(
+                parsedZodSchema,
+                {
+                    name: 'Test',
+                    map: {
+                        union: String,
+                    },
+                },
+                'ObjectType'
+            )
+
+        // Assert
+        expect(model).not.toThrowError()
+    })
 })

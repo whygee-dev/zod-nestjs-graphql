@@ -24,11 +24,14 @@ export const parseZodSchema = (
     const unwrapped = unwrapNestedZodRecursively(zodSchema)
     const type = AllowedZodTypes[unwrapped._def.typeName]
 
-    if (!type) {
-        throw new Error(`Type ${unwrapped._def.typeName} is not supported`)
-    }
-
     const nullable = zodSchema.isNullable() || zodSchema.isOptional()
+
+    if (!type) {
+        return {
+            type: AllowedZodTypes.Custom,
+            nullable,
+        }
+    }
 
     if (unwrapped instanceof z.ZodArray) {
         return {

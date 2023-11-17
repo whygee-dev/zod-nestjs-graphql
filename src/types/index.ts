@@ -12,6 +12,7 @@ export enum AllowedZodTypes {
     ZodNativeEnum = 'ZodNativeEnum',
     ZodEnum = 'ZodEnum',
     ZodArray = 'ZodArray',
+    Custom = 'Custom',
 }
 
 export type AllowedZodSchemaInput =

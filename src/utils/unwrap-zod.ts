@@ -144,7 +144,7 @@ export function unwrapNestedZod<T extends ZodType>(
  */
 export function unwrapNestedZodRecursively<
     T extends ZodType,
-    Depth extends number = 5
+    Depth extends number = 10
 >(input: T): UnwrapNestedZodRecursive<T, Depth> {
     let current = input as ZodType
 

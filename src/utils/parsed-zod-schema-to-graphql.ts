@@ -64,7 +64,7 @@ const getScalar = (type: AllowedZodTypes, keys?: string[], name?: string) => {
             return generatedEnum
     }
 
-    throw new Error(`Type ${type} not supported`)
+    return null
 }
 
 type DefinePropertyArgs = {
@@ -97,6 +97,12 @@ const defineProperty = ({
     }
 
     const scalar = getScalar(type, keys, ensurePascalCase(enumName ?? name))
+
+    if (!scalar) {
+        throw new Error(
+            `Type of '${name}' not supported, consider providing a custom type via the map option`
+        )
+    }
 
     Field(() => scalar, { nullable })(model.prototype, name)
 }

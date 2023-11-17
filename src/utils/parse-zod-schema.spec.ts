@@ -355,16 +355,4 @@ describe('parseZodSchema', () => {
             nullable: false,
         })
     })
-
-    test('throw error if type is not supported', () => {
-        // Arrange
-        const zodSchema = z.object({
-            union: z.string().or(z.number()),
-        })
-
-        // Assert
-        expect(() => parseZodSchema(zodSchema)).toThrowError(
-            'Type ZodUnion is not supported'
-        )
-    })
 })
