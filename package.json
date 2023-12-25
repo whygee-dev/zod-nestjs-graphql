@@ -1,6 +1,6 @@
 {
     "name": "zod-nestjs-graphql",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "main": "build/index.js",
     "types": "build/index.d.ts",
     "repository": "https://github.com/whygee-dev/zod-nestjs-graphql",
