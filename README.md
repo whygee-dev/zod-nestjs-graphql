@@ -51,7 +51,7 @@ zodToModel
 
 ```typescript
 import { z } from 'zod'
-import { zodToModel, InferModel } from 'zod-type-graphql'
+import { zodToModel, InferModel } from 'zod-nestjs-graphql'
 
 const model = zodToModel(
     z.object({
@@ -72,7 +72,7 @@ zodToInput
 
 ```typescript
 import { z } from 'zod'
-import { zodToInput, InferModel } from 'zod-type-graphql'
+import { zodToInput, InferModel } from 'zod-nestjs-graphql'
 
 const input = zodToInput(
     z.object({
@@ -93,7 +93,7 @@ Custom mapping ( works with custom scalars and zodToInput the same way )
 
 ```typescript
 import { z } from 'zod'
-import { zodToModel, InferModel } from 'zod-type-graphql'
+import { zodToModel, InferModel } from 'zod-nestjs-graphql'
 
 @ObjectType()
 class UserProfile {
